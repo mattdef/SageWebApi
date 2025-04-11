@@ -1,5 +1,6 @@
 using System.Xml.Linq;
 using Microsoft.Data.SqlClient;
+using SageWebApi.Models.DTO;
 
 namespace SageWebApi.Models;
 
@@ -12,10 +13,12 @@ public class ServiceBrokerMonitor(string connectionString) : IDisposable
     private DocumentChangeEventArgs? checkDocDoubleValueMemory;
     private TiersChangeEventArgs? checkTiersDoubleValueMemory;
     private EcritureChangeEventArgs? checkEcrDoubleValueMemory;
+    private EcheanceChangeEventArgs? checkEchDoubleValueMemory;
     
     public event EventHandler<DocumentChangeEventArgs>? DocumentTableChanged;
     public event EventHandler<TiersChangeEventArgs>? TiersTableChanged;
     public event EventHandler<EcritureChangeEventArgs>? EcritureTableChanged;
+    public event EventHandler<EcheanceChangeEventArgs>? EcheanceTableChanged;
 
     public void Start()
     {
@@ -140,11 +143,51 @@ public class ServiceBrokerMonitor(string connectionString) : IDisposable
                 case "F_ECRITUREC":
                     EcritureProcessMessage(rootElement);
                     break;
+                case "F_ECHEANCES": 
+                    EcheanceProcessMessage(rootElement);
+                    break;
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Erreur lors du traitement du message: {ex.Message}");
+        }
+    }
+
+    private void EcheanceProcessMessage(XElement element)
+    {
+        foreach (XElement modificationElement in element.Elements())
+        {
+            string operationType = modificationElement.Attribute("OperationType")!.Value;
+            string recordID = modificationElement.Attribute("RecordID")!.Value;
+            string modificationTime = modificationElement.Attribute("ModificationTime")!.Value;
+
+            if (!string.IsNullOrEmpty(operationType) 
+                && !string.IsNullOrEmpty(recordID))
+            {
+                DateTime timeStamp = DateTime.Parse(modificationTime);
+                
+                // Convertir le type d'opération en enum
+                TableChangeType changeType = operationType switch
+                {
+                    "INSERT" => TableChangeType.Insert,
+                    "UPDATE" => TableChangeType.Update,
+                    "DELETE" => TableChangeType.Delete,
+                    _ => TableChangeType.Unknown
+                };
+
+                // Test doublon
+                if (checkEchDoubleValueMemory is not null)
+                {
+                    if (checkEchDoubleValueMemory.RecordId == recordID
+                    && checkEchDoubleValueMemory.Timestamp > timeStamp.AddSeconds(-2))
+                    continue;
+                }
+                checkEchDoubleValueMemory = new EcheanceChangeEventArgs(recordID, changeType, timeStamp);
+                
+                // Déclencher l'événement
+               EcheanceTableChanged?.Invoke(this, new EcheanceChangeEventArgs(recordID, changeType, timeStamp));
+            }
         }
     }
 

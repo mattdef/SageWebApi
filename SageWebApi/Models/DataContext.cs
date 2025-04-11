@@ -8,6 +8,7 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
     public DbSet<DocumentChangeDto> DocumentChangeDtos { get; set; }
     public DbSet<TiersChangeDto> TiersChangeDtos { get; set; }
     public DbSet<EcritureChangeDto> EcritureChangeDtos { get; set; }
+    public DbSet<EcheanceChangeDto> EcheanceChangeDtos { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -34,6 +34,7 @@ public class ServiceBrokerService(ILogger<ServiceBrokerService> logger,
             _monitor.DocumentTableChanged += OnDocumentTableChanged!;
             _monitor.TiersTableChanged += OnTiersTableChanged!;
             _monitor.EcritureTableChanged += OnEcritureTableChanged!;
+            _monitor.EcheanceTableChanged += OnEcheanceTableChanged!;
 
             // Démarrer la surveillance
             _monitor.Start();
@@ -113,6 +114,23 @@ public class ServiceBrokerService(ILogger<ServiceBrokerService> logger,
         cn.EcritureChangeDtos.Add(new EcritureChangeDto
         {
             NumEcriture = e.RecordId,
+            ChangeType = e.ChangeType,
+            UpdatedDate = e.Timestamp
+        });
+        cn.SaveChanges();
+    }
+
+    private void OnEcheanceTableChanged(object sender, EcheanceChangeEventArgs e)
+    {
+        // Mettre la notification dans une file d'attente pour traitement
+        _notificationQueue.Enqueue(e);
+        _logger.LogInformation($"Modification d'échéance détectée: ID={e.RecordId}, Type={e.ChangeType}");
+
+        // Ajout en BDD
+        using var cn = _contextFactory.CreateDbContext();
+        cn.EcheanceChangeDtos.Add(new EcheanceChangeDto
+        {
+            NumEcheance = e.RecordId,
             ChangeType = e.ChangeType,
             UpdatedDate = e.Timestamp
         });

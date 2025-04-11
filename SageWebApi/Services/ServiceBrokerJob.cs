@@ -15,7 +15,16 @@ IConfiguration configuration) : IJob
     {
         try 
         {
-            Log.Information("ServiceBrokerJob running Job");
+            Log.Information("Documents modifiés :");
+
+            using var cn = _contextFactory.CreateDbContext();
+
+            var docs = cn.DocumentChangeDtos.ToList();
+
+            foreach (var doc in docs)
+            {
+                Log.Information($"   - Document: {doc.NumPiece}");
+            }
         }
         catch (Exception ex) 
         {
