@@ -61,4 +61,9 @@ app.MapGet("/tiers", async ([FromServices]DataContext context) => {
 })
 .WithName("GetTiers");
 
+app.MapGet("/echeances", async ([FromServices]DataContext context) => {
+    return await context.EcheanceChangeDtos.ToListAsync();
+})
+.WithName("GetEcheances");
+
 app.Run();
