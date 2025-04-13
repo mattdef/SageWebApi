@@ -17,10 +17,17 @@ builder.Host.ConfigureSerilog();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.Services.AddSingleton(_ => 
+    new SqlConnectionFactory(builder.Configuration.GetConnectionString("SageConnection") ?? 
+        throw new ArgumentException("Connection string not found")));
+
 builder.Services.AddDbContextFactory<DataContext>(opt => 
     opt.UseSqlServer(builder.Configuration.GetConnectionString("ProdwareConnection"))
     .EnableSensitiveDataLogging());
-builder.Services.AddSingleton(_ => new SqlConnectionFactory(builder.Configuration.GetConnectionString("SageConnection")));
+
+builder.Services.AddSingleton(_ => new ServiceBrokerMonitor(builder.Configuration.GetConnectionString("SageConnection") ?? 
+        throw new ArgumentException("Connection string not found")));
+
 builder.Services.AddSingleton<ServiceBrokerService>();
 builder.Services.AddHostedService(provider => provider.GetRequiredService<ServiceBrokerService>());
 

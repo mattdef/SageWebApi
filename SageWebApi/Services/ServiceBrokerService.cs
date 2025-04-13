@@ -6,12 +6,11 @@ using SageWebApi.Models.DTO;
 namespace SageWebApi.Services;
 
 public class ServiceBrokerService(ILogger<ServiceBrokerService> logger,
-        IConfiguration configuration,
-        IDbContextFactory<DataContext> contextFactory) : BackgroundService
+        IDbContextFactory<DataContext> contextFactory,
+        ServiceBrokerMonitor monitor) : BackgroundService
 {
     private readonly ILogger<ServiceBrokerService> _logger = logger;
-    private readonly IConfiguration _configuration = configuration;
-    private ServiceBrokerMonitor? _monitor;
+    private ServiceBrokerMonitor? _monitor = monitor;
     private readonly ConcurrentQueue<ChangeEventArgs> _notificationQueue = new();
     private readonly IDbContextFactory<DataContext> _contextFactory = contextFactory;
 
@@ -24,28 +23,25 @@ public class ServiceBrokerService(ILogger<ServiceBrokerService> logger,
 
         try
         {
-            // Récupérer la chaîne de connexion depuis la configuration
-            string connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
-
-            // Initialiser le moniteur Service Broker
-            _monitor = new ServiceBrokerMonitor(connectionString);
-
-            // S'abonner aux événements de changement
-            _monitor.DocumentTableChanged += OnDocumentTableChanged!;
-            _monitor.TiersTableChanged += OnTiersTableChanged!;
-            _monitor.EcritureTableChanged += OnEcritureTableChanged!;
-            _monitor.EcheanceTableChanged += OnEcheanceTableChanged!;
-
-            // Démarrer la surveillance
-            _monitor.Start();
-
-            // Maintenir le service en vie jusqu'à l'arrêt de l'application
-            while (!stoppingToken.IsCancellationRequested)
+            if (_monitor is not null)
             {
-                // Traiter les notifications en attente
-                ProcessNotificationQueue();
+                // S'abonner aux événements de changement
+                _monitor.DocumentTableChanged += OnDocumentTableChanged!;
+                _monitor.TiersTableChanged += OnTiersTableChanged!;
+                _monitor.EcritureTableChanged += OnEcritureTableChanged!;
+                _monitor.EcheanceTableChanged += OnEcheanceTableChanged!;
 
-                await Task.Delay(500, stoppingToken);
+                // Démarrer la surveillance
+                _monitor.Start();
+
+                // Maintenir le service en vie jusqu'à l'arrêt de l'application
+                while (!stoppingToken.IsCancellationRequested)
+                {
+                    // Traiter les notifications en attente
+                    ProcessNotificationQueue();
+
+                    await Task.Delay(500, stoppingToken);
+                }
             }
         }
         catch (Exception ex)
@@ -95,7 +91,7 @@ public class ServiceBrokerService(ILogger<ServiceBrokerService> logger,
         using var cn = _contextFactory.CreateDbContext();
         cn.TiersChangeDtos.Add(new TiersChangeDto
         {
-            NumPiece = e.RecordId,
+            NumTiers = e.RecordId,
             ChangeType = e.ChangeType,
             UpdatedDate = e.Timestamp,
             Type = e.Type

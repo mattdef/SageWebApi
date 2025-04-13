@@ -6,7 +6,7 @@ namespace SageWebApi.Models.DTO;
 public class TiersChangeDto : ChangeDto
 {
     [Required]
-    public string NumPiece { get; set; } = "";
+    public string NumTiers { get; set; } = "";
 
     [DefaultValue(0)]
     public int Type { get; set; }
