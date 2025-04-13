@@ -1,9 +1,15 @@
 @SageWebApi_HostAddress = http://localhost:5013
 
-GET {{SageWebApi_HostAddress}}/weatherforecast/
+GET {{SageWebApi_HostAddress}}/documents/
 Accept: application/json
 
-GET {{SageWebApi_HostAddress}}/documents/
+GET {{SageWebApi_HostAddress}}/ecritures/
+Accept: application/json
+
+GET {{SageWebApi_HostAddress}}/tiers/
+Accept: application/json
+
+GET {{SageWebApi_HostAddress}}/echeances/
 Accept: application/json
 
 ###

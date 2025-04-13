@@ -1,6 +1,5 @@
 using System.Xml.Linq;
 using Microsoft.Data.SqlClient;
-using SageWebApi.Models.DTO;
 
 namespace SageWebApi.Models;
 

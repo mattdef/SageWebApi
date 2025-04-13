@@ -2,13 +2,13 @@
 
 ## Description
 
-SageWebApi est une application qui utilise un moniteur de service broker pour surveiller les changements dans une base de données SQL. Le moniteur est implémenté dans la classe 
+SageWebApi est une application qui utilise un moniteur de service broker pour surveiller les changements dans une base de données SQL Sage 100c. Le moniteur est implémenté dans la classe 
 ServiceBrokerMonitor située dans le fichier SageWebApi/Models/ServiceBrokerMonitor.cs. Le moniteur utilise le service broker de SQL Server pour recevoir des notifications de changement de données. 
 
 ## Fonctionnalités
 
 ### Surveillance des changements
-Le moniteur surveille les changements dans les tables Document, Tiers et Ecriture de la base de données.
+Le moniteur surveille les changements dans les tables Document, Tiers, Ecriture et Echéance de la base de données.
 
 ### Gestion des événements
  La classe ServiceBrokerMonitor déclenche des événements lorsque des changements sont détectés dans les tables surveillées.

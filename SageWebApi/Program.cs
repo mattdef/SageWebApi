@@ -1,6 +1,6 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
+using SageWebApi.Endpoints;
 using SageWebApi.Models;
 using SageWebApi.Services;
 using Serilog;
@@ -20,6 +20,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContextFactory<DataContext>(opt => 
     opt.UseSqlServer(builder.Configuration.GetConnectionString("ProdwareConnection"))
     .EnableSensitiveDataLogging());
+builder.Services.AddSingleton(_ => new SqlConnectionFactory(builder.Configuration.GetConnectionString("SageConnection")));
 builder.Services.AddSingleton<ServiceBrokerService>();
 builder.Services.AddHostedService(provider => provider.GetRequiredService<ServiceBrokerService>());
 
@@ -46,24 +47,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet("/documents", async ([FromServices]DataContext context) => {
-    return await context.DocumentChangeDtos.ToListAsync();
-})
-.WithName("GetDocuments");
-
-app.MapGet("/ecritures", async ([FromServices]DataContext context) => {
-    return await context.EcritureChangeDtos.ToListAsync();
-})
-.WithName("GetEcritures");
-
-app.MapGet("/tiers", async ([FromServices]DataContext context) => {
-    return await context.TiersChangeDtos.ToListAsync();
-})
-.WithName("GetTiers");
-
-app.MapGet("/echeances", async ([FromServices]DataContext context) => {
-    return await context.EcheanceChangeDtos.ToListAsync();
-})
-.WithName("GetEcheances");
+app.MapDocumentEndpoints();
+app.MapEcheanceEndpoints();
+app.MapEcritureEndpoints();
+app.MapTiersEndpoints();
 
 app.Run();
