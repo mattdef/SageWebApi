@@ -3,7 +3,6 @@ using Quartz;
 using SageWebApi.Models;
 using Serilog;
 using Dapper;
-using Dapper.Contrib.Extensions;
 
 namespace SageWebApi.Services;
 
@@ -19,33 +18,49 @@ IConfiguration configuration) : IJob
     {
         try 
         {
-            Log.Information("Documents modifiés :");
+            Log.Information("Job Tiers");
 
             using var cnProd = _prodwareFactory.CreateDbContext();
-            using var cnSage = _sageFactory.Create();
+            using var cnSage = _sageFactory.CreateContext();
             var tiersList = cnProd.TiersChangeDtos.ToList();
 
             foreach (var tiers in tiersList)
             {
                 var query = @"SELECT cbMarq AS Id
-                        , CT_Num AS NumTiers
-                        , CT_Intitule AS Intitule
-                        , CT_Type AS Type
-                        , CG_NumPrinc AS ComptePrincipal
-                        , CT_Contact AS Contact
-                        , CT_Adresse AS Adresse
-                        , CT_Complement AS Complement
-                        , CT_CodePostal AS CodePostal
-                        , CT_Ville AS Ville
-                        , CT_Pays AS Pays
-                        , CT_Sommeil AS Sommeil
-                    FROM F_COMPTET 
-                    WHERE CT_Num = @NumTiers";
+                            , CT_Num AS NumTiers
+                            , CT_Intitule AS Intitule
+                            , CT_Type AS Type
+                            , CG_NumPrinc AS ComptePrincipal
+                            , CT_Contact AS Contact
+                            , CT_Adresse AS Adresse
+                            , CT_Complement AS Complement
+                            , CT_CodePostal AS CodePostal
+                            , CT_Ville AS Ville
+                            , CT_Pays AS Pays
+                            , CT_Sommeil AS Sommeil
+                        FROM F_COMPTET 
+                        WHERE CT_Num = @NumTiers";
                 var param = new { NumTiers = tiers.NumTiers };
                 var tiersSage = cnSage.Query<SageTiers>(query, param: param).FirstOrDefault();
 
                 if (tiersSage != null)
-                    Log.Information($"   - Tiers ({tiers.Id}): {tiersSage.NumTiers} - {tiersSage.Intitule}");
+                {
+                    switch (tiers.ChangeType)
+                    {
+                        case TableChangeType.Insert:
+                            Log.Information($"   - Tiers ajouté ({tiers.Id}): {tiersSage.NumTiers} - {tiersSage.Intitule}");
+                            break;
+                        case TableChangeType.Update:
+                            Log.Information($"   - Tiers modifié ({tiers.Id}): {tiersSage.NumTiers} - {tiersSage.Intitule}");
+                           break;
+                        case TableChangeType.Delete:
+                            Log.Information($"   - Tiers supprimé ({tiers.Id}): {tiersSage.NumTiers} - {tiersSage.Intitule}");
+                            break;
+                    }
+                }
+
+                cnProd.TiersChangeDtos.Remove(tiers);
+                cnProd.SaveChanges();
             }
         }
         catch (Exception ex) 

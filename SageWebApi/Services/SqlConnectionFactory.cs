@@ -6,7 +6,7 @@ public class SqlConnectionFactory (string connectionString)
 {
     private readonly string _connectionString = connectionString;
 
-    public SqlConnection Create()
+    public SqlConnection CreateContext()
     {
         return new SqlConnection(_connectionString);
     }
